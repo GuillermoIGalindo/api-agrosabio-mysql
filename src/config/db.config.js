@@ -2,7 +2,7 @@ module.exports = {
     HOST: "localhost",
     USER: "root",
     PASSWORD: "",
-    DB: "testdb",
+    DB: "Agrosabio_mysql",
     dialect: "mysql",
     pool: {
       max: 5,

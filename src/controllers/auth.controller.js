@@ -3,13 +3,14 @@ const config = require("../config/auth.config");
 const User = db.user;
 const Role = db.role;
 
+const logger = require('../config/logger');
+
 const Op = db.Sequelize.Op;
 
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 
 exports.signup = async (req, res) => {
-  // Save User to Database
   try {
     const user = await User.create({
       username: req.body.username,
@@ -26,15 +27,23 @@ exports.signup = async (req, res) => {
         },
       });
 
-      const result = user.setRoles(roles);
-      if (result) res.send({ message: "User registered successfully!" });
+      await user.setRoles(roles);
+      res.send({ message: "Usuario registrado correctamente!" });
+      // Registra el éxito al crear un usuario con roles específicos
+      logger.info(`Usuario registrado correctamente con el nombre: ${req.body.username} y el rol: ${req.body.roles.join(', ')}`);
+      
     } else {
       // user has role = 1
-      const result = user.setRoles([1]);
-      if (result) res.send({ message: "User registered successfully!" });
+      await user.setRoles([1]);
+      res.send({ message: "Usuario registrado correctamente!" });
+      // Registra el éxito al crear un usuario con el rol por defecto
+      logger.info(`Usuario registrado correctamenre con el nombre: ${req.body.username} con el rol por defecto.`);
+     
     }
   } catch (error) {
     res.status(500).send({ message: error.message });
+    // Registra el error
+    logger.error(`Error al registrar al usuario ${req.body.username}: ${error.message}`);
   }
 };
 
@@ -47,7 +56,7 @@ exports.signin = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(404).send({ message: "User Not found." });
+      return res.status(404).send({ message: "Usuario no encontrado." });
     }
 
     const passwordIsValid = bcrypt.compareSync(
@@ -57,7 +66,7 @@ exports.signin = async (req, res) => {
 
     if (!passwordIsValid) {
       return res.status(401).send({
-        message: "Invalid Password!",
+        message: "Contraseña incorrecta!",
       });
     }
 
@@ -92,7 +101,7 @@ exports.signout = async (req, res) => {
   try {
     req.session = null;
     return res.status(200).send({
-      message: "You've been signed out!"
+      message: "Has cerrado sesión correctamente!"
     });
   } catch (err) {
     this.next(err);
