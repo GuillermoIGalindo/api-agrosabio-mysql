@@ -1,6 +1,9 @@
 const express = require("express");
 const cors = require("cors");
 const cookieSession = require("cookie-session");
+const winston = require('winston');
+const logger = require('./src/config/logger'); // Asegúrate de que la ruta sea correcta
+
 
 const app = express();
 
@@ -16,26 +19,24 @@ app.use(express.urlencoded({ extended: true }));
 const db = require("./src/models");
 const Role = db.role;
 
-db.sequelize.sync({force: true}).then(() => {
-  console.log('Drop and Resync Db');
-  initial();
+db.sequelize.sync({ force: false }).then(() => {
+  console.log("Sincronización de DB exitosa.");
+  initialRoleSetup();
+  logger.info('Sincronización de DB exitosa.');
 });
 
-
-function initial() {
-  Role.create({
-    id: 1,
-    name: "user"
+function initialRoleSetup() {
+  Role.findOrCreate({
+    where: { id: 1 },
+    defaults: {
+      name: "admin"
+    }
   });
- 
-  Role.create({
-    id: 2,
-    name: "moderator"
-  });
- 
-  Role.create({
-    id: 3,
-    name: "admin"
+  Role.findOrCreate({
+    where: { id: 2 },
+    defaults: {
+      name: "user"
+    }
   });
 }
 
@@ -59,5 +60,5 @@ app.get("/", (req, res) => {
 // set port, listen for requests
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo por el puerto ${PORT}.`);
+  logger.info(`Servidor corriendo por el puerto ${PORT}.`);
 });
